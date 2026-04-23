@@ -27,14 +27,14 @@ const profiles = {
 };
 
 const services = [
-  { id: 'SYS-01', name: 'Almacenamiento Local', ip: '192.168.1.10:8080', status: 'ONLINE', icon: HardDrive, roles: ['student', 'teacher'] },
-  { id: 'SYS-02', name: 'Servidor Multimedia', ip: '192.168.1.11:32400', status: 'ONLINE', icon: MonitorPlay, roles: ['student', 'teacher'] },
-  { id: 'SYS-03', name: 'Gestor de Código', ip: '192.168.1.12:3000', status: 'OFFLINE', icon: GitFork, roles: ['teacher'] },
-  { id: 'SYS-04', name: 'Control Domótico', ip: '192.168.1.13:8123', status: 'ONLINE', icon: Cpu, roles: ['teacher'] },
-  { id: 'SYS-05', name: 'Filtro de Red (DNS)', ip: '192.168.1.14:80', status: 'ONLINE', icon: ShieldAlert, roles: ['teacher'] },
-  { id: 'SYS-06', name: 'Base de Datos', ip: '192.168.1.15:5432', status: 'ONLINE', icon: Database, roles: ['teacher'] },
-  { id: 'SYS-07', name: 'Terminal Virtual', ip: '192.168.1.16:2222', status: 'ONLINE', icon: Terminal, roles: ['teacher'] },
-  { id: 'SYS-08', name: 'Gestor de Red', ip: '192.168.1.1:443', status: 'ONLINE', icon: WifiHigh, roles: ['teacher'] },
+  { id: 'SYS-01', name: 'Atlas CMMS', ip: '192.168.10.100:3000', status: 'ONLINE', icon: HardDrive, roles: ['student', 'teacher'] },
+  { id: 'SYS-02', name: 'Manuales Aeronáuticos', ip: '192.168.10.100:8096', status: 'ONLINE', icon: MonitorPlay, roles: ['student', 'teacher'] },
+  { id: 'SYS-03', name: 'Listas de Alumnas', ip: '192.168.11.100:5748', status: 'ONLINE', icon: GitFork, roles: ['teacher'] },
+  { id: 'SYS-04', name: 'Solicitud de Herramientas', ip: '192.168.10.100:6767', status: 'ONLINE', icon: Cpu, roles: ['teacher'] },
+  //{ id: 'SYS-05', name: 'Filtro de Red (DNS)', ip: '192.168.1.14:80', status: 'ONLINE', icon: ShieldAlert, roles: ['teacher'] },
+  //{ id: 'SYS-06', name: 'Base de Datos', ip: '192.168.1.15:5432', status: 'ONLINE', icon: Database, roles: ['teacher'] },
+  //{ id: 'SYS-07', name: 'Terminal Virtual', ip: '192.168.1.16:2222', status: 'ONLINE', icon: Terminal, roles: ['teacher'] },
+  //{ id: 'SYS-08', name: 'Gestor de Red', ip: '192.168.1.1:443', status: 'ONLINE', icon: WifiHigh, roles: ['teacher'] },
 ];
 
 export default function App() {
