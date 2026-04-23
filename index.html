@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hangar Server</title>
+    <script>
+      // Inyectado de manera dinámica por Nginx (SSI) para lectura en la aplicación
+      window.CLIENT_IP = "<!--# echo var='remote_addr' -->";
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

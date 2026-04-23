@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  hangar-landing:
+    build: .
+    container_name: hangar-landing
+    ports:
+      - "80:80" # Cambia el primer 80 por el puerto que desees exponer (ej: "8080:80")
+    restart: unless-stopped
+    environment:
+      - TZ=America/Argentina/Buenos_Aires # Ajusta a la zona horaria del servidor
+    # Opcional: limitar recursos si el servidor cuenta con poca RAM libre
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 128M

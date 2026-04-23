@@ -1,0 +1,29 @@
+@import url('https://fonts.googleapis.com/css2?family=B612+Mono:ital,wght@0,400;0,700;1,400;1,700&family=B612:ital,wght@0,400;0,700;1,400;1,700&family=Barlow:wght@400;500;600;700&family=Bebas+Neue&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #0A2463;
+  --color-accent-amber: #F0A500;
+  --color-accent-red: #D62828;
+  --color-text-light: #F0F2F5;
+
+  --font-display: "Bebas Neue", sans-serif;
+  --font-subtitle: "Barlow", sans-serif;
+  --font-body: "B612", sans-serif;
+  --font-mono: "B612 Mono", monospace;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-primary);
+    color: var(--color-text-light);
+    font-family: var(--font-body);
+    /* Aviation/Industrial blueprint grid */
+    background-image: 
+      linear-gradient(rgba(240, 242, 245, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(240, 242, 245, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: center top;
+  }
+}
+
