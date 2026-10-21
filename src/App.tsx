@@ -33,9 +33,12 @@ const services: Service[] = [
 const ROUTE = 'M-60 760 C 300 700, 420 420, 760 430 S 1180 260, 1520 120';
 const mono = 'font-mono';
 
-async function ping(ip: string): Promise<boolean> {
+const PING_TIMEOUT_MS = 6000;
+const PING_ATTEMPTS = 3;
+
+async function pingOnce(ip: string): Promise<boolean> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 2500);
+  const timeoutId = setTimeout(() => controller.abort(), PING_TIMEOUT_MS);
   try {
     await fetch(`http://${ip}`, { mode: 'no-cors', cache: 'no-store', signal: controller.signal });
     return true;
@@ -44,6 +47,15 @@ async function ping(ip: string): Promise<boolean> {
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+// Un solo fallo no basta: se reintenta antes de declarar el servicio caído.
+async function ping(ip: string): Promise<boolean> {
+  for (let i = 0; i < PING_ATTEMPTS; i++) {
+    if (await pingOnce(ip)) return true;
+    await new Promise(r => setTimeout(r, 500));
+  }
+  return false;
 }
 
 function useClock() {
@@ -218,10 +230,15 @@ function ServiceCard({ service, index, liveStatus, onOfflineClick }: { service: 
   const isChecking = liveStatus === 'CHECKING...';
   const [host, port] = service.ip.split(':');
 
-  const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
-    if (!isOnline) {
-      e.preventDefault();
-      if (!isChecking) onOfflineClick();
+  const handleClick = async (e: MouseEvent<HTMLAnchorElement>) => {
+    if (isOnline) return;
+    e.preventDefault();
+    if (isChecking) return;
+    // El estado puede estar desactualizado: se verifica de nuevo antes de mostrar mantenimiento.
+    if (await ping(service.ip)) {
+      window.location.href = `http://${service.ip}`;
+    } else {
+      onOfflineClick();
     }
   };
 
