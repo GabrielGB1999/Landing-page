@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef, type RefObject, type MouseEvent } from 'react';
 import { motion } from 'motion/react';
+import { ping, roleForIp, type Role } from './lib';
 
 declare global {
   interface Window {
     CLIENT_IP?: string;
   }
 }
-
-type Role = 'student' | 'teacher';
 
 interface Service {
   id: string;
@@ -32,31 +31,6 @@ const services: Service[] = [
 
 const ROUTE = 'M-60 760 C 300 700, 420 420, 760 430 S 1180 260, 1520 120';
 const mono = 'font-mono';
-
-const PING_TIMEOUT_MS = 6000;
-const PING_ATTEMPTS = 3;
-
-async function pingOnce(ip: string): Promise<boolean> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), PING_TIMEOUT_MS);
-  try {
-    await fetch(`http://${ip}`, { mode: 'no-cors', cache: 'no-store', signal: controller.signal });
-    return true;
-  } catch {
-    return false;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
-// Un solo fallo no basta: se reintenta antes de declarar el servicio caído.
-async function ping(ip: string): Promise<boolean> {
-  for (let i = 0; i < PING_ATTEMPTS; i++) {
-    if (await pingOnce(ip)) return true;
-    await new Promise(r => setTimeout(r, 500));
-  }
-  return false;
-}
 
 function useClock() {
   const [clock, setClock] = useState('');
@@ -144,7 +118,7 @@ function Backdrop({ hdgRef }: { hdgRef: RefObject<HTMLSpanElement | null> }) {
 }
 
 export default function App() {
-  const [role, setRole] = useState<Role>('teacher');
+  const [role, setRole] = useState<Role>('student');
   const [clientIp, setClientIp] = useState('LOCAL_DEV');
   const [offlineRoute, setOfflineRoute] = useState<Service | null>(null);
   const [liveStatuses, setLiveStatuses] = useState<Record<string, string>>({});
@@ -154,19 +128,19 @@ export default function App() {
   // IP real inyectada por Nginx (SSI)
   useEffect(() => {
     const ip = window.CLIENT_IP;
-    if (ip && !ip.includes('<!--')) {
-      setClientIp(ip);
-      setRole(ip.startsWith('192.168.10.') ? 'student' : 'teacher');
-    }
+    if (ip && !ip.includes('<!--')) setClientIp(ip);
+    setRole(roleForIp(ip));
   }, []);
 
   // Ping de red en vivo
   useEffect(() => {
     const check = (s: Service) =>
       ping(s.ip).then(ok => setLiveStatuses(prev => ({ ...prev, [s.id]: ok ? 'ONLINE' : 'OFFLINE' })));
-    const checkAll = () => services.forEach(check);
+    const checkAll = () => {
+      if (!document.hidden) services.forEach(check);
+    };
     checkAll();
-    const id = setInterval(checkAll, 30000);
+    const id = setInterval(checkAll, 60000);
     return () => clearInterval(id);
   }, []);
 
@@ -228,15 +202,16 @@ export default function App() {
 function ServiceCard({ service, index, liveStatus, onOfflineClick }: { service: Service; index: number; liveStatus: string; onOfflineClick: () => void }) {
   const isOnline = liveStatus === 'ONLINE';
   const isChecking = liveStatus === 'CHECKING...';
+  const isOffline = !isOnline && !isChecking;
   const [host, port] = service.ip.split(':');
 
   const handleClick = async (e: MouseEvent<HTMLAnchorElement>) => {
-    if (isOnline) return;
+    if (!isOffline) return;
     e.preventDefault();
-    if (isChecking) return;
     // El estado puede estar desactualizado: se verifica de nuevo antes de mostrar mantenimiento.
     if (await ping(service.ip)) {
-      window.location.href = `http://${service.ip}`;
+      const url = `http://${service.ip}`;
+      if (!window.open(url, '_blank', 'noopener')) window.location.href = url; // popup bloqueado tras el await
     } else {
       onOfflineClick();
     }
@@ -254,9 +229,9 @@ function ServiceCard({ service, index, liveStatus, onOfflineClick }: { service: 
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4 + index * 0.14, duration: 1, ease: 'easeOut' }}
       className={`flex flex-col gap-7 p-7 rounded-[14px] border bg-[rgba(19,32,56,0.55)] backdrop-blur-[10px] text-fg transition-[border-color,background,transform] duration-250 hover:-translate-y-[3px] ${
-        isOnline
-          ? 'border-[rgba(160,190,230,0.14)] hover:border-[rgba(242,180,76,0.6)] hover:bg-[rgba(28,44,74,0.7)]'
-          : 'border-[rgba(229,100,107,0.3)] opacity-80'
+        isOffline
+          ? 'border-[rgba(229,100,107,0.3)] opacity-80'
+          : 'border-[rgba(160,190,230,0.14)] hover:border-[rgba(242,180,76,0.6)] hover:bg-[rgba(28,44,74,0.7)]'
       }`}
     >
       <div className={`${mono} flex justify-between items-center gap-3 text-[11px] tracking-[0.16em] text-muted whitespace-nowrap`}>
@@ -287,9 +262,17 @@ function MaintenanceScreen({ service, onBack }: { service: Service; onBack: () =
         <div className={`${mono} text-[13px] text-amber pb-4 mb-6 border-b border-[rgba(160,190,230,0.1)] break-all`}>
           {service.name} · {service.ip}
         </div>
-        <p className="m-0 mb-10 text-base leading-relaxed text-muted">
+        <p className="m-0 mb-6 text-base leading-relaxed text-muted">
           El servicio actualmente está en mantenimiento. Si este mensaje persiste, contáctese con el jefe de área.
         </p>
+        <a
+          href={`http://${service.ip}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block mb-6 text-sm text-muted underline hover:text-amber"
+        >
+          Intentar abrir de todos modos
+        </a>
         <button
           onClick={onBack}
           className={`${mono} px-6 py-3 rounded-lg border border-[rgba(160,190,230,0.2)] text-fg text-xs tracking-[0.14em] uppercase cursor-pointer hover:border-[rgba(242,180,76,0.6)] hover:text-amber transition-colors bg-transparent`}

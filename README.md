@@ -1,20 +1,18 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Hangar Net · portal de acceso
 
-# Run and deploy your AI Studio app
+Página estática (React + Vite) servida por Nginx. Muestra los servicios de la red del hangar y comprueba cada 60 s si responden.
 
-This contains everything you need to run your app locally.
+## Roles
 
-View your app in AI Studio: https://ai.studio/apps/a38b10ff-d5db-4bf3-bc16-2e7f5f1787bc
+Nginx inyecta la IP del cliente (SSI). IP `192.168.11.x` → docente (4 servicios). Cualquier otra IP, o ninguna → alumno (2 servicios).
 
-## Run Locally
+**Esto solo ordena el menú, no protege nada:** cada servicio debe controlar su propio acceso.
+La IP real solo llega si el contenedor ve al cliente directamente (no detrás de otro proxy/NAT).
 
-**Prerequisites:**  Node.js
+## Uso
 
+- Desarrollo: `npm install && npm run dev`
+- Pruebas: `npm test`
+- Producción: `docker compose up -d --build`
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Servirlo solo por HTTP: bajo HTTPS el navegador bloquea las comprobaciones `http://`.
