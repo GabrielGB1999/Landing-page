@@ -204,12 +204,17 @@ function ServiceCard({ service, index, liveStatus, onOfflineClick }: { service: 
   const isChecking = liveStatus === 'CHECKING...';
   const isOffline = !isOnline && !isChecking;
   const [host, port] = service.ip.split(':');
+  const [verifying, setVerifying] = useState(false);
 
   const handleClick = async (e: MouseEvent<HTMLAnchorElement>) => {
     if (!isOffline) return;
     e.preventDefault();
+    if (verifying) return;
     // El estado puede estar desactualizado: se verifica de nuevo antes de mostrar mantenimiento.
-    if (await ping(service.ip)) {
+    setVerifying(true);
+    const ok = await ping(service.ip);
+    setVerifying(false);
+    if (ok) {
       const url = `http://${service.ip}`;
       if (!window.open(url, '_blank', 'noopener')) window.location.href = url; // popup bloqueado tras el await
     } else {
@@ -225,6 +230,7 @@ function ServiceCard({ service, index, liveStatus, onOfflineClick }: { service: 
       target="_blank"
       rel="noopener noreferrer"
       onClick={handleClick}
+      aria-busy={verifying}
       initial={{ opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4 + index * 0.14, duration: 1, ease: 'easeOut' }}
@@ -247,13 +253,19 @@ function ServiceCard({ service, index, liveStatus, onOfflineClick }: { service: 
       </div>
       <div className={`${mono} flex justify-between items-center gap-3 mt-auto pt-[18px] border-t border-[rgba(160,190,230,0.1)] text-[13px] whitespace-nowrap`}>
         <span className="text-muted">{host}:{port}</span>
-        <span className={isOnline ? 'text-amber' : 'text-danger'}>{isOnline ? 'Entrar →' : isChecking ? '…' : 'Sin servicio'}</span>
+        <span className={isOnline ? 'text-amber' : 'text-danger'}>{isOnline ? 'Entrar →' : isChecking ? '…' : verifying ? 'Verificando…' : 'Sin servicio'}</span>
       </div>
     </motion.a>
   );
 }
 
 function MaintenanceScreen({ service, onBack }: { service: Service; onBack: () => void }) {
+  useEffect(() => {
+    const prev = document.title;
+    document.title = `${service.name} en mantenimiento · Hangar Net`;
+    return () => { document.title = prev; };
+  }, [service]);
+
   return (
     <div className="relative min-h-screen flex items-center justify-center p-6 bg-[radial-gradient(120%_80%_at_70%_0%,#132038_0%,#070b14_60%)]">
       <div className="max-w-xl w-full p-8 md:p-10 rounded-[14px] border border-[rgba(229,100,107,0.35)] bg-[rgba(19,32,56,0.55)] backdrop-blur-[10px]">
