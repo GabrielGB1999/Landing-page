@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
-import { ping, roleForIp } from './lib';
+import { arrowTarget, ping, roleForIp } from './lib';
 
 afterEach(() => {
   vi.useRealTimers();
@@ -36,5 +36,22 @@ describe('ping', () => {
     const p = ping('1.2.3.4:80');
     await vi.runAllTimersAsync();
     expect(await p).toBe(false);
+  });
+});
+
+describe('arrowTarget', () => {
+  it('mueve por fila y columna sin salirse de la grilla', () => {
+    // grilla 2x2: 0 1 / 2 3
+    expect(arrowTarget('ArrowRight', 0, 4, 2)).toBe(1);
+    expect(arrowTarget('ArrowDown', 1, 4, 2)).toBe(3);
+    expect(arrowTarget('ArrowUp', 1, 4, 2)).toBe(1);
+    expect(arrowTarget('ArrowLeft', 0, 4, 2)).toBe(0);
+    expect(arrowTarget('ArrowDown', 0, 3, 2)).toBe(2);
+    expect(arrowTarget('ArrowDown', 1, 3, 2)).toBe(1);
+  });
+  it('enfoca la primera tarjeta si no hay foco e ignora otras teclas', () => {
+    expect(arrowTarget('ArrowDown', -1, 4, 2)).toBe(0);
+    expect(arrowTarget('Enter', 0, 4, 2)).toBeNull();
+    expect(arrowTarget('ArrowDown', -1, 0, 2)).toBeNull();
   });
 });
