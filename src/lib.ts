@@ -29,3 +29,19 @@ export async function ping(ip: string): Promise<boolean> {
   }
   return false;
 }
+
+const STEP: Record<string, (cols: number) => number> = {
+  ArrowLeft: () => -1,
+  ArrowRight: () => 1,
+  ArrowUp: cols => -cols,
+  ArrowDown: cols => cols,
+};
+
+// Índice de la tarjeta destino al pulsar una flecha en una grilla de `cols` columnas; null si no es flecha.
+export function arrowTarget(key: string, index: number, count: number, cols: number): number | null {
+  const step = STEP[key];
+  if (!step || count === 0) return null;
+  if (index < 0) return 0;
+  const next = index + step(cols);
+  return next >= 0 && next < count ? next : index;
+}

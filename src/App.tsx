@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, type RefObject, type MouseEvent } from 'react';
 import { motion } from 'motion/react';
-import { ping, roleForIp, type Role } from './lib';
+import { arrowTarget, ping, roleForIp, type Role } from './lib';
 
 declare global {
   interface Window {
@@ -124,6 +124,7 @@ export default function App() {
   const [liveStatuses, setLiveStatuses] = useState<Record<string, string>>({});
   const clock = useClock();
   const hdgRef = useRef<HTMLSpanElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   // IP real inyectada por Nginx (SSI)
   useEffect(() => {
@@ -143,6 +144,23 @@ export default function App() {
     const id = setInterval(checkAll, 60000);
     return () => clearInterval(id);
   }, []);
+
+  // Navegación con flechas entre tarjetas
+  useEffect(() => {
+    if (offlineRoute) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || !gridRef.current) return;
+      const cards = Array.from(gridRef.current.querySelectorAll<HTMLElement>(':scope > a'));
+      // columnas = tarjetas en la primera fila (la grilla es auto-fit)
+      const cols = cards.filter(c => c.offsetTop === cards[0]?.offsetTop).length;
+      const target = arrowTarget(e.key, cards.indexOf(document.activeElement as HTMLElement), cards.length, cols);
+      if (target === null) return;
+      e.preventDefault();
+      cards[target].focus();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [offlineRoute]);
 
   const filteredServices = services.filter(s => s.roles.includes(role));
 
@@ -177,7 +195,7 @@ export default function App() {
           <p className="m-0 max-w-[460px] text-base leading-relaxed text-muted">Seleccione un servicio para continuar.</p>
         </motion.div>
 
-        <div className="grid gap-5 max-w-[820px] grid-cols-[repeat(auto-fit,minmax(min(100%,340px),1fr))]">
+        <div ref={gridRef} className="grid gap-5 max-w-[820px] grid-cols-[repeat(auto-fit,minmax(min(100%,340px),1fr))]">
           {filteredServices.map((svc, i) => (
             <ServiceCard
               key={svc.id}
@@ -234,7 +252,7 @@ function ServiceCard({ service, index, liveStatus, onOfflineClick }: { service: 
       initial={{ opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4 + index * 0.14, duration: 1, ease: 'easeOut' }}
-      className={`flex flex-col gap-7 p-7 rounded-[14px] border bg-[rgba(19,32,56,0.55)] backdrop-blur-[10px] text-fg transition-[border-color,background,transform] duration-250 hover:-translate-y-[3px] ${
+      className={`flex flex-col gap-7 p-7 rounded-[14px] border bg-[rgba(19,32,56,0.55)] backdrop-blur-[10px] text-fg transition-[border-color,background,transform] duration-250 hover:-translate-y-[3px] outline-none focus-visible:ring-2 focus-visible:ring-amber focus-visible:-translate-y-[3px] ${
         isOffline
           ? 'border-[rgba(229,100,107,0.3)] opacity-80'
           : 'border-[rgba(160,190,230,0.14)] hover:border-[rgba(242,180,76,0.6)] hover:bg-[rgba(28,44,74,0.7)]'
